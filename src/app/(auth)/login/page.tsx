@@ -1,5 +1,4 @@
 "use client";
-"use client";
 
 import React from "react";
 import { Label } from "@/components/ui/label";
@@ -69,7 +68,7 @@ function LoginPage() {
                 <Link href="/register" className="text-orange-500 hover:underline">
                     register
                 </Link>{" "}
-                with riverflow
+                with Query-Pool
             </p>
 
             {error && (
