@@ -18,7 +18,6 @@ import { storage } from "@/models/client/config";
 import { UserPrefs } from "@/store/Auth";
 import convertDateToRelativeTime from "@/utils/relativeTime";
 import slugify from "@/utils/slugify";
-import { IconEdit } from "@tabler/icons-react";
 import Link from "next/link";
 import { Query } from "node-appwrite";
 import React from "react";
@@ -27,31 +26,47 @@ import EditQuestion from "./EditQuestion";
 import { TracingBeam } from "@/components/ui/tracing-beam";
 
 const Page = async ({ params }: { params: { quesId: string; quesName: string } }) => {
-    const [question, answers, upvotes, downvotes, comments] = await Promise.all([
-        databases.getDocument(db, questionCollection, params.quesId),
-        databases.listDocuments(db, answerCollection, [
-            Query.orderDesc("$createdAt"),
-            Query.equal("questionId", params.quesId),
-        ]),
-        databases.listDocuments(db, voteCollection, [
-            Query.equal("typeId", params.quesId),
-            Query.equal("type", "question"),
-            Query.equal("voteStatus", "upvoted"),
-            Query.limit(1), // for optimization
-        ]),
-        databases.listDocuments(db, voteCollection, [
-            Query.equal("typeId", params.quesId),
-            Query.equal("type", "question"),
-            Query.equal("voteStatus", "downvoted"),
-            Query.limit(1), // for optimization
-        ]),
-        databases.listDocuments(db, commentCollection, [
-            Query.equal("type", "question"),
-            Query.equal("typeId", params.quesId),
-            Query.orderDesc("$createdAt"),
-        ]),
-    ]);
+    // console.log("Params:", params);
 
+const [question, answers, upvotes, downvotes, comments] = await Promise.all([
+            databases.getDocument(db, questionCollection, params.quesId).catch(err => {
+                console.error("Error fetching question:", err);
+                throw err;
+            }),
+            databases.listDocuments(db, answerCollection, [
+                Query.orderDesc("$createdAt"),
+                Query.equal("questionId", params.quesId),
+            ]).catch(err => {
+                console.error("Error fetching answers:", err);
+                throw err;
+            }),
+            databases.listDocuments(db, voteCollection, [
+                Query.equal("typeId", params.quesId),
+                Query.equal("type", "question"),
+                Query.equal("voteStatus", "upvoted"),
+                Query.limit(1), // for optimization
+            ]).catch(err => {
+                console.error("Error fetching upvotes:", err);
+                throw err;
+            }),
+            databases.listDocuments(db, voteCollection, [
+                Query.equal("typeId", params.quesId),
+                Query.equal("type", "question"),
+                Query.equal("voteStatus", "downvoted"),
+                Query.limit(1), // for optimization
+            ]).catch(err => {
+                console.error("Error fetching downvotes:", err);
+                throw err;
+            }),
+            databases.listDocuments(db, commentCollection, [
+                Query.equal("type", "question"),
+                Query.equal("typeId", params.quesId),
+                Query.orderDesc("$createdAt"),
+            ]).catch(err => {
+                console.error("Error fetching comments:", err);
+                throw err;
+            }),
+        ]);
     // since it is dependent on the question, we fetch it here outside of the Promise.all
     const author = await users.get<UserPrefs>(question.authorId);
     [comments.documents, answers.documents] = await Promise.all([
